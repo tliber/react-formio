@@ -5,8 +5,6 @@ module.exports = React.createClass({
   displayName: 'FormioWizard',
   getInitialState: function() {
     console.log('from formiowizard, props: ', this.props);
-    console.log('from formiowizard, STATE: ', this.props.state);
-    console.log('from formiowizard, data: ', this.props.data);
     return { currentPage: 0 };
   },
   nextPage: function(event) {
@@ -60,8 +58,10 @@ module.exports = React.createClass({
 
       pageArray.push(
         <div className={curPageClassName + isActive}>
-          <div className='text-center bs-wizard-stepnum'>
-            {pages[i].title}
+          <div className='bs-wizard-stepnum-wrapper'>
+            <div className='text-center bs-wizard-stepnum'>
+              {pages[i].title}
+            </div>
           </div>
           <div className='progress'>
             <div className='progress-bar progress-bar-primary'></div>
@@ -73,6 +73,9 @@ module.exports = React.createClass({
       )
     }
 
+    console.log('pages', pages);
+    console.log('pageArray', pageArray);
+
     return (
       <div className="formio-wizard">
           <div className="panel panel-default">
@@ -80,7 +83,7 @@ module.exports = React.createClass({
               <h3 className="panel-title">Preview</h3>
             </div>
             <div className="panel-body">
-              <div className="formio-wizard-wrapper">
+              <div className="formio-wizard">
                 <div className="row bs-wizard hasTitles">
                   {pageArray}
                 </div>
