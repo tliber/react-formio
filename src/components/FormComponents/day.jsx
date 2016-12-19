@@ -1,17 +1,23 @@
 import React from 'react';
 import valueMixin from './mixins/valueMixin';
 import multiMixin from './mixins/multiMixin';
+import componentMixin from './mixins/componentMixin';
 
 module.exports = React.createClass({
   displayName: 'Textfield',
-  mixins: [valueMixin, multiMixin],
+  mixins: [valueMixin, multiMixin, componentMixin],
   onChangeCustom: function() {
     const padLeft = function padLeft(nr, n, str) {
       return Array(n - String(nr.toString()).length + 1).join(str || '0') + nr.toString();
     };
     const { date } = this.state;
 
-    this.setValue(padLeft(date.day, 2) + '/' + padLeft(date.month, 2) + '/' + padLeft(date.year, 4));
+    if (this.props.component.dayFirst) {
+      this.setValue(padLeft(date.day, 2) + '/' + padLeft(date.month, 2) + '/' + padLeft(date.year, 4));
+    }
+    else {
+      this.setValue(padLeft(date.month, 2) + '/' + padLeft(date.day, 2) + '/' + padLeft(date.year, 4));
+    }
   },
   validateCustom: function(value) {
     const required = this.props.component.fields.day.required || this.props.component.fields.month.required || this.props.component.fields.year.required;

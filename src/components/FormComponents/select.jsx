@@ -1,6 +1,7 @@
 import React from 'react';
 import valueMixin from './mixins/valueMixin';
 import selectMixin from './mixins/selectMixin';
+import componentMixin from './mixins/componentMixin';
 import formiojs from 'formiojs';
 import { interpolate, serialize, raw } from '../../util';
 import get from 'lodash/get';
@@ -10,7 +11,7 @@ module.exports = React.createClass({
   options: {},
   lastInput: '',
   displayName: 'Select',
-  mixins: [valueMixin, selectMixin],
+  mixins: [valueMixin, selectMixin, componentMixin],
   getValueField: function() {
     if (this.props.component.dataSrc === 'custom' || this.props.component.dataSrc === 'json') {
       return false;
@@ -45,10 +46,10 @@ module.exports = React.createClass({
         this.refreshItems = () => {
           try {
             /* eslint-disable no-unused-vars */
-            var data = {...this.props.data};
+            const { data, row } = this.props;
             /* eslint-enable no-unused-vars */
             this.setState({
-              selectItems: eval('(function(data) { var values = [];' + this.props.component.data.custom.toString() + '; return values; })(data)')
+              selectItems: eval('(function(data, row) { var values = [];' + this.props.component.data.custom.toString() + '; return values; })(data, row)')
             });
           }
           catch (error) {

@@ -4,12 +4,12 @@ import { clone, debounce } from 'lodash';
 
 module.exports = {
   getDefaultValue: function(value) {
-    const { component, data } = this.props;
+    const { component, data, row } = this.props;
     // Allow components to set different default values.
     if (value == null) {
       if (component.hasOwnProperty('customDefaultValue')) {
         try {
-          value = eval('(function(data) { var value = "";' + component.customDefaultValue.toString() + '; return value; })(data)');
+          value = eval('(function(data, row) { var value = "";' + component.customDefaultValue.toString() + '; return value; })(data, row)');
         }
         catch (e) {
           /* eslint-disable no-console */
@@ -50,9 +50,6 @@ module.exports = {
     }
     // ComponentWillReceiveProps isn't working without this as the reference to the data already is updated.
     this.data = {};
-    if (typeof this.props.onChange === 'function') {
-      this.onChangeDebounced = debounce(this.props.onChange, 250);
-    }
     return state;
   },
   validate: function(value) {
@@ -133,6 +130,7 @@ module.exports = {
       var input = item;
       var valid;
       try {
+        const { data, row } = this.props;
         valid = eval(custom);
         state.isValid = (valid === true);
       }
@@ -154,7 +152,8 @@ module.exports = {
       if (!deepEqual(this.data, nextProps.data)) {
         this.data = clone(nextProps.data);
         try {
-          value = eval('(function(data) { var value = [];' + component.calculateValue.toString() + '; return value; })(this.data)');
+          const result = eval('(function(data, row) { var value = [];' + component.calculateValue.toString() + '; return value; })(this.data, nextProps.row)');
+          this.setValue(result);
         }
         catch (e) {
           /* eslint-disable no-console */
@@ -204,22 +203,25 @@ module.exports = {
   componentWillUnmount: function() {
     this.props.detachFromForm(this);
   },
-  onChange: function(event, debounce = false) {
+  onChange: function(event) {
     var value = event.target.value;
     // Allow components to respond to onChange event.
     if (typeof this.onChangeCustom === 'function') {
       value = this.onChangeCustom(value);
     }
     var index = (this.props.component.multiple ? event.target.getAttribute('data-index') : null);
-    this.setValue(value, index, false, debounce);
+    this.setValue(value, index);
   },
-  setValue: function(value, index, pristine, debounce = false) {
+  setValue: function(value, index, pristine) {
     if (index === undefined) {
       index = null;
     }
     this.setState(previousState => {
       if (index !== null && Array.isArray(previousState.value)) {
-        previousState.value[index] = value;
+        // Clone so we keep state immutable.
+        const newValue = clone(previousState.value);
+        newValue[index] = value
+        previousState.value = newValue;
       }
       else {
         previousState.value = value;
@@ -229,12 +231,7 @@ module.exports = {
       return previousState;
     }, () => {
       if (typeof this.props.onChange === 'function') {
-        if (!debounce) {
-          this.props.onChange(this);
-        }
-        else {
-          this.onChangeDebounced(this);
-        }
+        this.props.onChange(this);
       }
     });
   },
