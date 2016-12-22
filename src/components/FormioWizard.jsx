@@ -1,32 +1,38 @@
 var React = require('react');
 var FormioComponentsList = require('./FormioComponentsList').default;
+var _ = require('lodash');
 
 module.exports = React.createClass({
   displayName: 'FormioWizard',
-  getInitialState: function() {
-    console.log('from formiowizard, props: ', this.props);
-    return { currentPage: 0 };
-  },
-  nextPage: function(event) {
-    event.preventDefault();
+  getInitialState: function() { return { currentPage: 0 }},
+
+  nextPage: function(e) {
+    e.preventDefault();
+    console.log('data', this.props.data);
+
     this.setState((previousState) => {
       if (previousState.currentPage < (this.pages.length - 1)) {
         previousState.currentPage++;
       }
       return previousState;
     });
+    //
   },
+
   previousPage: function() {
     this.setState((previousState) => {
-      console.log({curPg: previousState.currentPage});
       if (previousState.currentPage > 0) {
         previousState.currentPage--;
       }
       return previousState;
     });
   },
+
   render: function () {
+    var data = _.clone(this.props.data);
     var pages = this.pages = [];
+    var prevData = JSON.parse(localStorage.getItem('reactWizard')) || [];
+
 
     this.props.components.forEach(function(component, index) {
       if (component.type === 'panel') {
@@ -40,6 +46,19 @@ module.exports = React.createClass({
     if(pages.length-1 >= this.state.currentPage){
       curPageComponents = pages[this.state.currentPage].components;
     }
+
+    let renderButton = () => {
+      if(this.state.currentPage+1 === pages.length) return (<button className="btn btn-primary" type="submit">Submit Form</button>)
+      return (<button className="btn btn-primary" type="button" onClick={ this.nextPage }>Next</button>)
+    };
+
+    localStorage.setItem('reactWizard', JSON.stringify(Object.assign(prevData, data)));
+
+    if(this.state.currentPage+1 === pages.length) {
+      data = JSON.parse(localStorage.getItem('reactWizard'));
+      this.props.state.submission.data = data;
+      console.log('last page json string data', data);
+    };
 
     for(var i = 0; i < pages.length;i++){
       var curPageClassName = 'col-sm-2 bs-wizard-step';
@@ -73,8 +92,7 @@ module.exports = React.createClass({
       )
     }
 
-    console.log('pages', pages);
-    console.log('pageArray', pageArray);
+    console.log('PROPS', this.props);
 
     return (
       <div className="formio-wizard">
@@ -95,9 +113,7 @@ module.exports = React.createClass({
                 <button className="btn btn-primary" type="button" onClick={ this.previousPage }>
                   Previous
                 </button>
-                <button className="btn btn-primary" type="button" onClick={ this.nextPage }>
-                  Next
-                </button>
+                {renderButton()}
               </div>
             </div>
           </div>
