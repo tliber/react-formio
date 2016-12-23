@@ -2,6 +2,7 @@ import React from 'react';
 import Formiojs from 'formiojs';
 import FormioUtils from 'formio-utils';
 import { FormioComponentsList } from '../components';
+import FormioWizard from '../components/FormioWizard';
 import _ from 'lodash';
 
 // TODO: We should have a better way of initializing form components.
@@ -144,15 +145,21 @@ export const Formio = React.createClass({
       return previousState;
     });
   },
-  onSubmit: function (event) {
-    event.preventDefault();
-
+  setPristine: function(isPristine) {
     // Mark all inputs as dirty so errors show.
     Object.keys(this.inputs).forEach(function (name) {
       this.inputs[name].setState({
-        isPristine: false
+        isPristine
       });
     }.bind(this));
+    this.setState({
+      isPristine
+    });
+  },
+  onSubmit: function (event) {
+    event.preventDefault();
+
+    this.setPristine(false);
 
     if (!this.state.isValid) {
       this.showAlert('danger', 'Please fix the following errors before submitting.', true);
@@ -239,10 +246,32 @@ export const Formio = React.createClass({
       return (<div className={className} role='alert' key={index}>{alert.message}</div>);
     });
 
-    return (
-      <form role='form' name='formioForm' onSubmit={this.onSubmit}>
-        {loading}
-        {alerts}
+    let renderDisplay = () => {
+      if(this.state.form.display === 'wizard') {
+        return (
+          <FormioWizard
+            components={components}
+            values={this.state.submission.data}
+            options={this.props.options}
+            attachToForm={this.attachToForm}
+            detachFromForm={this.detachFromForm}
+            isSubmitting={this.state.isSubmitting}
+            isFormValid={this.state.isValid}
+            onElementRender={this.props.onElementRender}
+            resetForm={this.resetForm}
+            formio={this.formio}
+            data={this.data}
+            onChange={this.onChange}
+            onEvent={this.onEvent}
+            isDisabled={this.isDisabled}
+            checkConditional={this.checkConditional}
+            state={this.state}
+            showAlert={this.showAlert}
+            formPristine={this.state.isPristine}
+          />
+        )
+      }
+      return (
         <FormioComponentsList
           components={components}
           values={this.state.submission.data}
@@ -262,6 +291,14 @@ export const Formio = React.createClass({
           showAlert={this.showAlert}
           formPristine={this.state.isPristine}
         />
+      )
+    };
+
+    return (
+      <form role='form' name='formioForm' onSubmit={this.onSubmit}>
+        {loading}
+        {alerts}
+        {renderDisplay()}
       </form>
     );
   }
